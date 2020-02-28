@@ -1,0 +1,117 @@
+Vlad Andrei-Alexandru
+311 CB
+
+								--POKER TOURNAMENT--
+
+IMPLEMENTARE STRUCTURI
+
+In aceasta tema am implementat structurile primite in fisierul info.h rezultand mai multe structuri: 
+	Sala care contine
+	* Lista de mese si contorizari ale jucatorilor si meselor;
+					^
+					|
+	* Lista generica, fara santinela, formata din celule care contin pointeri catre structuri de tip Masa.
+	Pentru fiecare celula din aceasta lista, in campul info, este alocata dinamic o structura de tip Masa
+	In fiecare structura de acest tip se regasesc 
+		- un pointer catre o zona de memorie alocata dinamic care reprezinta numele Mesei;
+		-	intregi care tin evidenta jucatorilor de la masa respectiva;
+		- Lista generica circulara pentru jucatori.
+			In campul informatie pentru aceasta lista de jucatori este alocata dinamic o structura de tipul
+			Jucator care contine un pointer catre o zona de memorie alocata dinamic (reprezinta numele jucatorului)
+			si numarul de maini al acestuia (intreg).
+
+
+DESCHIDERE FISIERE DE CONFIGURATIE, EVENIMENTE SI OUTPUT
+
+Am folosit variabilele argc si argv pentru a afla numele fisierelor date ca argumente in linia de comanda si
+am facut verificarile necesare pentru corectitudinea acestora (numarul de parametrii).
+Folosind pointeri de tip FILE* am deschis fisierele in mod corespunzator (configuratie + evenimente in mod READ, 
+iar out in mod WRITE).
+Dupa succesul acestora se aloca dinamic structura de tip Sala pentru a se stoca informatiile urmatoare.
+
+CONFIGURATIE.txt
+Am delimitat numarul de mese si le-am citit cu o instructiune de tip "for".
+Pentru fiecare masa citita am parcurs cu un alt "for" jucatorii.
+In timp ce se citesc aceste informatii se introduc in structurile corespunzatoare si legate in celulele specifice
+in liste.
+Daca o singura alocare nu reuseste, fie pentru jucator sau masa (numele sau structura corespunzatoare), programul
+isi incheie executia.
+Dupa ce se citesc toate informatiile din fisier, se completeaza fiecare camp din structura SalaJoc
+
+EVENIMENTE.in
+La pasul anterior cand am citit din configuratie am folosit functia getline si am delimitat informatiile folosind
+strtok. Acest lucru s-a intamplat cu succes, dar nu si aici in citirea evenimentelor. Pe masina locala se citea
+ultima functie de 2 ori (probabil pentru ca citeam pana la EOF, iar ultima linie era goala si variabila in care
+scria getline ramanea nemodificata). Pentru a evita executarea ultimei functii de 2 ori am modificat variabila in
+care getline scria, punand pe ultima pozitie '\0'; Pe masina locala acest lucru mergea, dar cand am incarcat pe
+vmchecker aceasta "ocolire" nu mai mergea. Deci am trebuit sa folosesc functia fscanf.
+Pentru a citi cu fscanf am declarat vectori cu lungime fixa (64) pentru string-uri si un intreg pentru valoare.
+Am construit o functie care imi returneaza un numar in functie de ce comanda se citeste din fisier in acel moment.
+Folosind un switch pe baza acestui numar de return am apelat functiile respective. Pentru fiecare functie in care 
+erau necesari mai multi parametrii i-am citit din fisier tot cu functia fscanf.
+
+OUT.txt
+Acest fisier este scris de majoritatea functiilor din program. Pointerul care indica catre zona de memorie unde acest
+fisier este deschis, l-am dat ca parametru pentru functiile care aveau nevoie de a scrie outputul.
+
+ELIBERARE DE MEMORIE
+La sfarsitul programului am apelat functia de distrugere sala care porneste de la cel mai mic nivel (nume jucator,
+structura alocata fiecaruia, numele mesei, lista de jucatori, structura mesei, toate celulele de pana aici, si
+structura alocata pentru sala de joc).
+De asemenea, daca vreo alocare nu reuseste in orice punct al programului, acesta isi opreste executia dupa ce
+elibereaza SalaJoc cu tot ce a fost alocat pana in acel moment.
+La final se inchid fisierele.
+
+FUNCTIILE IMPLEMENTATE
+Am creat functii pentru alocare celule de orice tip, inserare in lista circulara si necirculara, initializare 
+si inserare de/in lista circulara, alocare masa si creare jucatori. Aceste ultime 2 functii returneaza un intreg 
+pe baza caruia se specifica succesul alocarilor. Acest rezultat intors este verificat in main.
+
+
+FUNCTIA PRINT
+Aceasta functie primeste sala de joc si fisierul in care scrie outputul. Se obtine lista de mese din structura salii
+si se cicleaza prin aceasta. Pentru fiecare masa se obtine lista de jucatori (pentru a nu folosit cast la fiecare pas
+am initializat variabile ajutatoare de tip corespunzator) si se apeleaza o functie de AfisareJucator care primeste
+informatia din fiecare celula din lista de jucatori. Aceasta lista de jucatori stie sa se opreasca atunci cand cursorul
+este egal cu santinela.
+
+FUNCTIA NOROC
+La fel ca la functia print se obtine lista de mese din structura salii. Se cicleaza prin lista de mese pana cand 
+strcmp(nume_masa_curenta, numele_dat_ca_parametru) == 0. Atunci s-a gasit masa si se iese din while.
+Se obtine lista de jucatori din masa gasita si se cauta jucatorul in acelasi mod ca mai sus.
+Dupa ce s-a gasit jucatorul i se creste numarul de maini cu acea valoare.
+Daca nu se gaseste masa sau jucatorul (lmese == NULL sau ljuc == santinela) se afiseaza mesajul corespunzator si se 
+opreste executia programului.
+
+FUNCTIA GHINION
+Asemenea functiei noroc se cauta jucatorul, se scade numarul de maini si la final de verifica lista de jucatori,
+lista de mese si sala. Daca jucatorul va avea numarul de maini <= 0 se vor reface legaturile si se va elimina din lista.
+Daca in masa respectiva nu mai exista niciun jucator (doar santinela) se va elibera santinela, structura mesei, 
+celula acesteia si se vor reface legaturile in lista de mese. Daca masa respectiva este prima, atunci SalaJoc->masa va
+primi a doua celula (a doua masa din lista).
+Daca in sala nrMese == 0 atunci se va face free pe Sala.
+
+FUNCTIA TURA
+Cauta masa in lista de mese (ca mai sus), apeleaza o functie de rotatie, decrementare (scade nr maini) si se verifica masa
+(daca nrCrtJucatori de la masa curenta == 0 se va elimina masa).
+Functia de Rotatie primeste santinela, isi determina ultimul jucator (ult->urm != santinela) si in loc sa mute toti jucatorii
+in jurul santinelei, se va muta santinela dupa primul jucator (S->1->2->S ===> 1->S->2->1).
+Functia de decrementare primeste santinela si de la primul jucator pana la ultimul se scade 1 din nrMaini.
+Functia care verifica masa primeste sala si structura mesei care se verifica. Se cauta toti jucatorii cu nrMaini <= 0.
+Pentru cei gasiti se scade din evidenta acel jucator, se refac legaturile si se elibereaza memoria. Apoi se verifica daca in
+masa curenta mai sunt jucatori sau nu. Daca masa nu mai contine jucatori, se va elimina (proces asemanator cu cel explicat anterior)
+si se va scoate din evidenta meselor.
+
+FUNCTIA TURA COMPLETA
+Aceasta apeleaza functia tura pentru fiecare masa din lista de mese
+
+FUNCTIA CLASAMENT
+Aceasta functie cauta masa primita ca parametru si verifica daca exista. Daca exista se extrag informatiile, se copiaza lista de
+jucatori intr-o lista noua, dar de aceasta data se ordoneaza in functie de numarul de maini si de nume descrescator. Aceasta
+ordonare are loc in timp ce se citesc din lista intiala. Se apeleaza o functie care afiseaza clasamentul pe noua lista sortata descrescator
+si la final se distruge aceasta lista nou creata.
+
+FUNCTIA INCHIDE
+Aici se cauta masa data ca parametru si verifica daca exista. Daca exista, salvez lista de jucatori de redistribuit, calculez noul numar de 
+locuri disponibile din sala si pe baza acestuia verifica daca inchiderea mesei se poate realiza cu succes. Se cicleaza prin lista de mese si 
+insereaza din lista de redistribuit in lista de jucatori de la fiecare masa gasita cu locuri disponibile, pana cand nu mai sunt locuri ramase sau pana cand se termina de redistribuit jucatorii. Acesti jucatori de redistribuit sunt tinuti in evidenta doar de noile mese gazda.
